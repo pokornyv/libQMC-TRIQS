@@ -1,3 +1,7 @@
+# library of functions to be used with the TRIQS cthyb solver
+# tested with TRIQS 1.4
+# Vladislav Pokorny; 2016-2017; pokornyv@fzu.cz
+
 import scipy as sp
 from time import ctime
 from itertools import product
@@ -33,6 +37,7 @@ def TailCoeffs(G,bands_T):
 		Gtail3_D[band1,band2] = sp.real(G['0'][band1,band2].tail[3][0][0])
 		Gtail4_D[band1,band2] = sp.real(G['0'][band1,band2].tail[4][0][0])
 	return [Gtail1_D,Gtail2_D,Gtail3_D,Gtail4_D]
+
 
 def TotalDensity(G,bands_T,beta,NMats,gtype):
 	''' calculates the density from Green function '''
@@ -110,7 +115,6 @@ def WriteMatrix(X_D,bands_T,Xtype,logfname):
 	input: Xtype = "D" = dict, "M" = matrix '''
 	out_text = ''
 	NBand = len(bands_T)
-	#for i,j in product(range(NBand), repeat = 2):
 	for i in range(NBand):
 		for j in range(NBand):
 			X = X_D[bands_T[i],bands_T[j]] if Xtype == 'D' else X_D[i][j]
@@ -135,9 +139,10 @@ def WriteTail(G,bands_T,logfname):
 	WriteMatrix(Gtail4_D,bands_T,'D',logfname)
 
 
-def WriteEig(eig,logfname):
+def WriteEig(eig,bands_T,InputParam,logfname):
 	''' writes the eigenspectrum of the local Hamiltonian '''
 	from string import zfill
+	NBand = len(bands_T)
 	PrintAndWrite('Hamiltonian structure:',logfname)
 	PrintAndWrite('  Hilbert space dimension:  {0: 3d}'.format(int(eig.full_hilbert_space_dim)),logfname)
 	PrintAndWrite('  Number of blocks: {0: 3d}'.format(int(eig.n_blocks)),logfname)
@@ -145,8 +150,9 @@ def WriteEig(eig,logfname):
 	for i in range(eig.n_blocks):
 		for j in range(len(eig.energies[i])):
 			PrintAndWrite('    {0: 3d}\t{1: 3d}\t{2: .8f}\t'\
-			.format(i+1,j+1,eig.energies[i][j])+zfill(bin(eig.fock_states[i][j])[2:],2),logfname)
+			.format(i+1,j+1,eig.energies[i][j])+zfill(bin(eig.fock_states[i][j])[2:],NBand),logfname)
 	PrintAndWrite('  Ground state energy: {0: .8f}'.format(float(eig.gs_energy)),logfname)
+	PrintAndWrite('  :GS_ENERGY  {0: .6f}\t{1: .8f}'.format(float(InputParam),float(eig.gs_energy)),logfname)
 
 
 def WriteHisto(po):
@@ -169,4 +175,6 @@ def WriteHisto(po):
 	for i in orders_F:
 		f.write('{0: 3d}\t{1: 3d}\n'.format(int(i),int(po.data[i])))
 	f.close()
+	return [avg_pert,sd_pert,skew_pert,kurt_pert]
+
 
